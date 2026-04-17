@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人事管理システム</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;background:#f5f4f0}
+:root{
+  --color-background-primary:#fff;
+  --color-background-secondary:#f5f4f0;
+  --color-background-tertiary:#eeecea;
+  --color-text-primary:#1a1a1a;
+  --color-text-secondary:#6b6a66;
+  --color-text-tertiary:#9e9d99;
+  --color-border-tertiary:rgba(0,0,0,.12);
+  --color-border-secondary:rgba(0,0,0,.25);
+  --color-border-primary:rgba(0,0,0,.35);
+  --border-radius-md:8px;
+  --border-radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --color-background-primary:#1e1e1c;
+  --color-background-secondary:#2a2a28;
+  --color-background-tertiary:#222220;
+  --color-text-primary:#f0ede8;
+  --color-text-secondary:#a0a09c;
+  --color-text-tertiary:#6b6a66;
+  --color-border-tertiary:rgba(255,255,255,.1);
+  --color-border-secondary:rgba(255,255,255,.2);
+  --color-border-primary:rgba(255,255,255,.3);
+}}
+.app{min-height:100vh;background:var(--color-background-tertiary)}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:16px;font-weight:500}
+.role-badge{font-size:11px;padding:3px 10px;border-radius:var(--border-radius-md);font-weight:500}
+.role-admin{background:#EEEDFE;color:#3C3489}
+.role-manager{background:#E1F5EE;color:#085041}
+.role-viewer{background:#E6F1FB;color:#0C447C}
+.sidebar{position:fixed;top:53px;left:0;width:200px;height:calc(100% - 53px);background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:12px 0;overflow-y:auto;z-index:40}
+.nav-item{padding:8px 20px;font-size:14px;cursor:pointer;color:var(--color-text-secondary);display:flex;align-items:center;gap:8px;border-left:2px solid transparent;user-select:none}
+.nav-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.nav-item.active{color:#534AB7;border-left-color:#534AB7;background:#EEEDFE}
+.nav-section{font-size:11px;color:var(--color-text-tertiary);padding:12px 20px 4px;text-transform:uppercase;letter-spacing:.5px}
+.sidebar-footer{position:absolute;bottom:0;left:0;right:0;padding:12px;border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary)}
+.main{margin-left:200px;padding:24px;min-height:calc(100vh - 53px)}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:18px;font-weight:500}
+.btn{padding:7px 14px;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);transition:background .15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn-primary{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn-primary:hover{background:#3C3489}
+.search-bar{display:flex;gap:8px;margin-bottom:16px}
+.search-input{flex:1;padding:8px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.search-input:focus{outline:none;border-color:#534AB7;box-shadow:0 0 0 2px rgba(83,74,183,.15)}
+.select{padding:8px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer}
+.table-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);text-transform:uppercase;letter-spacing:.3px}
+td{padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+.emp-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.emp-cell{display:flex;align-items:center;gap:10px}
+.dept-badge{font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);font-weight:500}
+.dept-eng{background:#E1F5EE;color:#085041}
+.dept-sales{background:#FAEEDA;color:#633806}
+.dept-hr{background:#EEEDFE;color:#3C3489}
+.dept-finance{background:#E6F1FB;color:#0C447C}
+.dept-mkt{background:#FAECE7;color:#4A1B0C}
+.action-btns{display:flex;gap:6px}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary)}
+.btn-sm:hover{border-color:var(--color-border-primary)}
+.btn-sm.danger{color:#A32D2D;border-color:#F09595}
+.btn-sm.danger:hover{background:#FCEBEB}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:16px}
+.metric-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px}
+.metric-value{font-size:24px;font-weight:500}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200}
+.modal{background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:24px;width:440px;border:0.5px solid var(--color-border-tertiary);max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:500;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:8px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.form-input:focus{outline:none;border-color:#534AB7}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--color-background-tertiary)}
+.login-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:32px;width:380px;max-width:95vw}
+.login-logo{font-size:18px;font-weight:500;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--color-text-secondary);margin-bottom:24px}
+.user-row{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s}
+.user-row:hover{background:var(--color-background-secondary)}
+.permission-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;color:var(--color-text-secondary)}
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tab{padding:8px 16px;font-size:13px;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px;user-select:none}
+.tab.active{color:#534AB7;border-bottom-color:#534AB7;font-weight:500}
+.tab:hover:not(.active){color:var(--color-text-primary)}
+.check{color:#1D9E75;font-size:14px}
+.cross{color:#A32D2D;font-size:14px}
+.mobile-hint{display:none;font-size:12px;color:var(--color-text-tertiary);text-align:center;padding:8px 0 4px}
+@media(max-width:640px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:12px}
+  .metrics{grid-template-columns:1fr 1fr}
+  .table-wrap{overflow-x:auto}
+  .hide-mobile{display:none}
+  .mobile-hint{display:block}
+  .modal{width:100%;margin:12px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const USERS=[
+  {id:1,name:'山田 太郎',email:'yamada@corp.jp',role:'admin',avatar:'山太',color:'#EEEDFE',textColor:'#3C3489'},
+  {id:2,name:'佐藤 花子',email:'sato@corp.jp',role:'manager',avatar:'佐花',color:'#E1F5EE',textColor:'#085041'},
+  {id:3,name:'鈴木 一郎',email:'suzuki@corp.jp',role:'viewer',avatar:'鈴一',color:'#E6F1FB',textColor:'#0C447C'},
+];
+const INIT_EMPLOYEES=[
+  {id:1,name:'田中 誠',dept:'エンジニアリング',pos:'シニアエンジニア',joined:'2021-04-01',salary:720000,status:'在籍'},
+  {id:2,name:'山本 美咲',dept:'営業',pos:'営業マネージャー',joined:'2019-07-15',salary:650000,status:'在籍'},
+  {id:3,name:'加藤 健二',dept:'人事',pos:'HRスペシャリスト',joined:'2022-01-10',salary:560000,status:'在籍'},
+  {id:4,name:'伊藤 彩',dept:'マーケティング',pos:'コンテンツライター',joined:'2023-03-01',salary:490000,status:'在籍'},
+  {id:5,name:'渡辺 拓海',dept:'エンジニアリング',pos:'フルスタックエンジニア',joined:'2020-09-15',salary:680000,status:'在籍'},
+  {id:6,name:'中村 里佳',dept:'財務',pos:'経理担当',joined:'2018-06-01',salary:610000,status:'休職中'},
+  {id:7,name:'小林 浩司',dept:'エンジニアリング',pos:'プロダクトマネージャー',joined:'2017-11-20',salary:790000,status:'在籍'},
+  {id:8,name:'松本 涼子',dept:'営業',pos:'アカウントエグゼクティブ',joined:'2021-08-01',salary:540000,status:'在籍'},
+];
+const PERMS={
+  admin:{view:true,edit:true,delete:true,salary:true,roles:true},
+  manager:{view:true,edit:true,delete:false,salary:false,roles:false},
+  viewer:{view:true,edit:false,delete:false,salary:false,roles:false},
+};
+const DEPT_CLASS={'エンジニアリング':'dept-eng','営業':'dept-sales','人事':'dept-hr','財務':'dept-finance','マーケティング':'dept-mkt'};
+const ROLE_LABELS={admin:'管理者',manager:'マネージャー',viewer:'閲覧者'};
+const DEPTS=['エンジニアリング','営業','人事','財務','マーケティング'];
+
+let state={currentUser:null,page:'employees',search:'',deptFilter:'',showModal:null,employees:[...INIT_EMPLOYEES],editId:null,activeTab:'roles'};
+
+function can(a){return state.currentUser&&PERMS[state.currentUser.role][a]}
+function ac(name){const h=[210,280,150,30,0,340,190,60][name.charCodeAt(0)%8];return{bg:`hsl(${h},60%,90%)`,text:`hsl(${h},60%,30%)`}}
+
+function renderLogin(){
+  return`<div class="login-wrap"><div class="login-card">
+    <div class="login-logo">人事管理システム</div>
+    <div class="login-sub">ユーザーを選択してログイン</div>
+    ${USERS.map(u=>`<div class="user-row" onclick="login(${u.id})">
+      <div style="width:36px;height:36px;border-radius:50%;background:${u.color};color:${u.textColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0">${u.avatar}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:500">${u.name}</div><div style="font-size:12px;color:var(--color-text-secondary)">${u.email}</div></div>
+      <span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span>
+    </div>`).join('')}
+    <div style="font-size:12px;color:var(--color-text-tertiary);text-align:center;margin-top:12px">権限の違いを確認するため、異なるユーザーでログインできます</div>
+  </div></div>`;
+}
+
+function renderApp(){
+  const u=state.currentUser;
+  return`
+  <div class="topbar">
+    <div style="font-size:16px;font-weight:500">人事管理システム</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span>
+      <div style="width:32px;height:32px;border-radius:50%;background:${u.color};color:${u.textColor};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500">${u.avatar}</div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="nav-section">メニュー</div>
+    <div class="nav-item${state.page==='employees'?' active':''}" onclick="navigate('employees')">◻ 社員一覧</div>
+    ${can('roles')?`<div class="nav-item${state.page==='settings'?' active':''}" onclick="navigate('settings')">◈ 権限・設定</div>`:''}
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${u.color};color:${u.textColor};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500">${u.avatar}</div>
+        <div style="font-size:12px"><div style="font-weight:500">${u.name}</div><span class="role-badge role-${u.role}">${ROLE_LABELS[u.role]}</span></div>
+      </div>
+      <button class="btn" style="width:100%;font-size:12px" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+  <div class="main">${state.page==='employees'?renderEmployees():renderSettings()}</div>
+  ${state.showModal?renderModal():''}`;
+}
+
+function renderEmployees(){
+  const filtered=state.employees.filter(e=>{
+    const q=state.search;
+    return(!q||e.name.includes(q)||e.dept.includes(q)||e.pos.includes(q))&&(!state.deptFilter||e.dept===state.deptFilter);
+  });
+  const depts=[...new Set(state.employees.map(e=>e.dept))];
+  const avg=Math.round(state.employees.reduce((a,e)=>a+e.salary,0)/state.employees.length);
+  return`
+  <div class="page-header">
+    <div class="page-title">社員一覧</div>
+    ${can('edit')?`<button class="btn btn-primary" onclick="openModal('add')">+ 社員を追加</button>`:''}
+  </div>
+  <div class="metrics">
+    <div class="metric-card"><div class="metric-label">総社員数</div><div class="metric-value">${state.employees.length}</div></div>
+    <div class="metric-card"><div class="metric-label">在籍中</div><div class="metric-value" style="color:#1D9E75">${state.employees.filter(e=>e.status==='在籍').length}</div></div>
+    <div class="metric-card"><div class="metric-label">部署数</div><div class="metric-value">${new Set(state.employees.map(e=>e.dept)).size}</div></div>
+    ${can('salary')?`<div class="metric-card"><div class="metric-label">平均月給</div><div class="metric-value" style="font-size:18px">¥${avg.toLocaleString()}</div></div>`:`<div class="metric-card"><div class="metric-label">給与</div><div class="metric-value" style="font-size:13px;color:var(--color-text-tertiary)">閲覧権限なし</div></div>`}
+  </div>
+  <div class="search-bar">
+    <input class="search-input" type="text" placeholder="名前・部署・役職で検索..." value="${state.search}" oninput="doSearch(this.value)">
+    <select class="select" onchange="doDept(this.value)">
+      <option value="">全部署</option>
+      ${depts.map(d=>`<option value="${d}"${state.deptFilter===d?' selected':''}>${d}</option>`).join('')}
+    </select>
+  </div>
+  <div class="mobile-hint">スマートフォンでは検索・フィルター機能が利用できます</div>
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th>社員名</th>
+      <th class="hide-mobile">部署</th>
+      <th class="hide-mobile">役職</th>
+      <th class="hide-mobile">入社日</th>
+      ${can('salary')?'<th class="hide-mobile">月給</th>':''}
+      <th>ステータス</th>
+      ${can('edit')||can('delete')?'<th>操作</th>':''}
+    </tr></thead>
+    <tbody>
+      ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--color-text-secondary)">該当する社員が見つかりません</td></tr>`:
+      filtered.map(e=>{
+        const dc=DEPT_CLASS[e.dept]||'dept-hr';
+        const a=ac(e.name);
+        return`<tr>
+          <td><div class="emp-cell">
+            <div class="emp-avatar" style="background:${a.bg};color:${a.text}">${e.name.charAt(0)}</div>
+            <div><div style="font-weight:500">${e.name}</div><div style="font-size:11px;color:var(--color-text-secondary)">${e.pos}</div></div>
+          </div></td>
+          <td class="hide-mobile"><span class="dept-badge ${dc}">${e.dept}</span></td>
+          <td class="hide-mobile" style="color:var(--color-text-secondary)">${e.pos}</td>
+          <td class="hide-mobile" style="color:var(--color-text-secondary)">${e.joined}</td>
+          ${can('salary')?`<td class="hide-mobile" style="font-family:monospace">¥${e.salary.toLocaleString()}</td>`:''}
+          <td><span style="font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);background:${e.status==='在籍'?'#E1F5EE':'#FAEEDA'};color:${e.status==='在籍'?'#085041':'#633806'};font-weight:500">${e.status}</span></td>
+          ${can('edit')||can('delete')?`<td><div class="action-btns">
+            ${can('edit')?`<button class="btn-sm" onclick="openModal('edit',${e.id})">編集</button>`:''}
+            ${can('delete')?`<button class="btn-sm danger" onclick="deleteEmp(${e.id})">削除</button>`:''}
+          </div></td>`:''}
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderSettings(){
+  if(!can('roles'))return`<div class="permission-denied"><div style="font-size:32px;margin-bottom:12px">🔒</div><div style="font-size:15px;font-weight:500;margin-bottom:6px">アクセス権限がありません</div><div style="font-size:13px">この画面は管理者のみ閲覧できます</div></div>`;
+  return`
+  <div class="page-header"><div class="page-title">権限・設定</div></div>
+  <div class="tabs">
+    <div class="tab${state.activeTab==='roles'?' active':''}" onclick="setTab('roles')">ロール管理</div>
+    <div class="tab${state.activeTab==='perms'?' active':''}" onclick="setTab('perms')">権限マトリクス</div>
+  </div>
+  ${state.activeTab==='roles'?renderRolesTab():renderPermMatrix()}`;
+}
+
+function renderRolesTab(){
+  return`<div style="display:flex;flex-direction:column;gap:12px">
+    ${USERS.map(u=>`<div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:50%;background:${u.color};color:${u.textColor};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">${u.avatar}</div>
+      <div style="flex:1"><div style="font-weight:500">${u.name}</div><div style="font-size:12px;color:var(--color-text-secondary)">${u.email}</div></div>
+      <select class="select" onchange="changeRole(${u.id},this.value)">
+        <option value="admin"${u.role==='admin'?' selected':''}>管理者</option>
+        <option value="manager"${u.role==='manager'?' selected':''}>マネージャー</option>
+        <option value="viewer"${u.role==='viewer'?' selected':''}>閲覧者</option>
+      </select>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderPermMatrix(){
+  const actions=[
+    {key:'view',label:'社員情報閲覧'},
+    {key:'edit',label:'社員情報編集'},
+    {key:'delete',label:'社員削除'},
+    {key:'salary',label:'給与情報閲覧'},
+    {key:'roles',label:'権限設定'},
+  ];
+  return`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>権限</th>
+      <th style="text-align:center"><span class="role-badge role-admin">管理者</span></th>
+      <th style="text-align:center"><span class="role-badge role-manager">マネージャー</span></th>
+      <th style="text-align:center"><span class="role-badge role-viewer">閲覧者</span></th>
+    </tr></thead>
+    <tbody>
+      ${actions.map(a=>`<tr>
+        <td style="font-size:13px">${a.label}</td>
+        ${['admin','manager','viewer'].map(r=>`<td style="text-align:center">${PERMS[r][a.key]?'<span class="check">✓</span>':'<span class="cross">✗</span>'}</td>`).join('')}
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderModal(){
+  const isEdit=state.showModal==='edit';
+  const emp=isEdit?state.employees.find(e=>e.id===state.editId):{};
+  return`<div class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">${isEdit?'社員情報を編集':'新しい社員を追加'}</div>
+      <div class="form-group"><label class="form-label">氏名</label>
+        <input class="form-input" id="f-name" value="${isEdit?emp.name:''}" placeholder="例: 田中 誠"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">部署</label>
+          <select class="form-input" id="f-dept">${DEPTS.map(d=>`<option${isEdit&&emp.dept===d?' selected':''}>${d}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">ステータス</label>
+          <select class="form-input" id="f-status">
+            <option${isEdit&&emp.status==='在籍'?' selected':''}>在籍</option>
+            <option${isEdit&&emp.status==='休職中'?' selected':''}>休職中</option>
+            <option${isEdit&&emp.status==='退職'?' selected':''}>退職</option>
+          </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">役職</label>
+        <input class="form-input" id="f-pos" value="${isEdit?emp.pos:''}" placeholder="例: シニアエンジニア"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">入社日</label>
+          <input class="form-input" id="f-joined" type="date" value="${isEdit?emp.joined:''}"></div>
+        ${can('salary')?`<div class="form-group"><label class="form-label">月給 (円)</label>
+          <input class="form-input" id="f-salary" type="number" value="${isEdit?emp.salary:''}" placeholder="600000"></div>`:`<div class="form-group"><label class="form-label">月給</label><div style="padding:8px 12px;font-size:12px;color:var(--color-text-tertiary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)">権限なし</div></div>`}
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveEmp(${isEdit})">保存</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(){
+  document.getElementById('app').innerHTML=state.currentUser?renderApp():renderLogin();
+}
+
+window.login=id=>{state.currentUser=USERS.find(u=>u.id===id);render()};
+window.logout=()=>{state.currentUser=null;state.page='employees';render()};
+window.navigate=page=>{state.page=page;render()};
+window.doSearch=v=>{state.search=v;render()};
+window.doDept=v=>{state.deptFilter=v;render()};
+window.setTab=t=>{state.activeTab=t;render()};
+window.openModal=(type,id)=>{state.showModal=type;state.editId=id||null;render()};
+window.closeModal=e=>{if(!e||e.target.classList.contains('modal-overlay')){state.showModal=null;render()}};
+window.deleteEmp=id=>{if(confirm('この社員を削除しますか？')){state.employees=state.employees.filter(e=>e.id!==id);render()}};
+window.changeRole=(id,role)=>{const u=USERS.find(u=>u.id===id);if(u)u.role=role;if(state.currentUser&&state.currentUser.id===id)state.currentUser.role=role;render()};
+window.saveEmp=isEdit=>{
+  const name=document.getElementById('f-name').value.trim();
+  if(!name)return alert('氏名を入力してください');
+  const dept=document.getElementById('f-dept').value;
+  const pos=document.getElementById('f-pos').value.trim();
+  const joined=document.getElementById('f-joined').value;
+  const status=document.getElementById('f-status').value;
+  const salaryEl=document.getElementById('f-salary');
+  const salary=salaryEl?parseInt(salaryEl.value)||0:0;
+  if(isEdit){
+    const e=state.employees.find(e=>e.id===state.editId);
+    if(e)Object.assign(e,{name,dept,pos,joined,status,...(salary?{salary}:{})});
+  }else{
+    state.employees.push({id:Date.now(),name,dept,pos,joined,salary,status});
+  }
+  state.showModal=null;render();
+};
+
+render();
+</script>
+</body>
+</html>
